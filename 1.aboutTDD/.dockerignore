@@ -1,0 +1,12 @@
+.idea
+.git
+.github/**
+test/**
+.gitignore
+.dockerignore
+Dockerfile
+*.md
+
+# pnpm & node dependencies
+node_modules
+pnpm-lock.yaml
