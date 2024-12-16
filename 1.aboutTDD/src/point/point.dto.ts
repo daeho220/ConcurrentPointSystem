@@ -1,6 +1,7 @@
-import { IsInt, isPositive } from 'class-validator';
+import { IsInt, IsPositive } from 'class-validator';
 
 export class PointBody {
     @IsInt()
+    @IsPositive()
     amount: number;
 }
