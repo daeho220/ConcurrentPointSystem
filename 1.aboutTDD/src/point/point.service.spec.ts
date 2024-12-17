@@ -75,30 +75,32 @@ describe('PointService', () => {
         // 1. 유효한 사용자 ID와 충전 금액이 제공되면 올바른 사용자 포인트 정보를 반환합니다.
         it('should charge the user point', async () => {
             const userId = 1;
-            const firstPoint = 0;
-            const amount = 1000;
-            const newBalance = firstPoint + amount;
+            const initialPoint = 0;
+            const chargeAmount = 1000;
+            const newBalance = initialPoint + chargeAmount;
 
             const now = Date.now();
 
-            // 사용자 포인트 조회 모킹
+            // selectById 모킹 - 항상 초기값 반환
             const mockUserPoint: UserPoint = {
                 id: userId,
-                point: firstPoint,
+                point: initialPoint,
                 updateMillis: now,
             };
             jest.spyOn(userPointTable, 'selectById').mockResolvedValue(mockUserPoint);
 
-            // 포인트 히스토리 삽입 모킹
-            const mockPointHistory: PointHistory = {
-                id: 1,
-                userId: userId,
-                amount: amount,
-                type: TransactionType.CHARGE,
-                timeMillis: now,
-            };
-
-            jest.spyOn(pointHistoryTable, 'insert').mockResolvedValue(mockPointHistory);
+            // 포인트 히스토리 모킹
+            jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
+                async (userId, amount, type, time) => {
+                    return {
+                        id: 1,
+                        userId,
+                        amount,
+                        type,
+                        timeMillis: time,
+                    };
+                },
+            );
 
             // 사용자 포인트 업데이트 모킹
             const mockInsertOrUpdate: UserPoint = {
@@ -108,7 +110,7 @@ describe('PointService', () => {
             };
             jest.spyOn(userPointTable, 'insertOrUpdate').mockResolvedValue(mockInsertOrUpdate);
 
-            const result = await service.chargePoint(userId, amount);
+            const result = await service.chargePoint(userId, chargeAmount);
 
             expect(result).toEqual(mockInsertOrUpdate);
         });
@@ -117,27 +119,31 @@ describe('PointService', () => {
         // 1. 충전 금액이 0보다 작으면 예외를 발생시킵니다.
         it('should throw an error when the amount is less than 0', async () => {
             const userId = 1;
-            const amount = -1000;
+            const chargeAmount = -1000;
 
-            await expect(service.chargePoint(userId, amount)).rejects.toThrow(BadRequestException);
+            await expect(service.chargePoint(userId, chargeAmount)).rejects.toThrow(
+                BadRequestException,
+            );
         });
         // 2. 충전 금액이 최대 잔고(2,147,483,647)를 초과하면 예외를 발생시킵니다.
         it('should throw an error when the amount exceeds the maximum balance', async () => {
             const userId = 1;
-            const firstPoint = 0;
-            const amount = 2_147_483_648;
+            const initialPoint = 0;
+            const chargeAmount = 2_147_483_648;
 
             const now = Date.now();
 
             const mockUserPoint: UserPoint = {
                 id: userId,
-                point: firstPoint,
+                point: initialPoint,
                 updateMillis: now,
             };
             jest.spyOn(userPointTable, 'selectById').mockResolvedValue(mockUserPoint);
 
-            await expect(service.chargePoint(userId, amount)).rejects.toThrow(BadRequestException);
-            await expect(service.chargePoint(userId, amount)).rejects.toThrow(
+            await expect(service.chargePoint(userId, chargeAmount)).rejects.toThrow(
+                BadRequestException,
+            );
+            await expect(service.chargePoint(userId, chargeAmount)).rejects.toThrow(
                 '최대 잔고를 초과했습니다.',
             );
         });
