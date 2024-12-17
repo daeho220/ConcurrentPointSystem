@@ -27,7 +27,7 @@ export class PointController {
     @Get(':id')
     async point(@Param('id') id): Promise<UserPoint> {
         const userId = Number.parseInt(id);
-        return this.pointService.getUserPoint(userId);
+        return this.pointService.getPoint(userId);
     }
 
     /**
@@ -46,7 +46,7 @@ export class PointController {
     async charge(@Param('id') id, @Body(ValidationPipe) pointDto: PointDto): Promise<UserPoint> {
         const userId = Number.parseInt(id);
         const amount = pointDto.amount;
-        return this.pointService.chargeUserPoint(userId, amount);
+        return this.pointService.chargePoint(userId, amount);
     }
 
     /**

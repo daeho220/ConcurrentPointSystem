@@ -13,14 +13,14 @@ export class PointService {
     private readonly MAX_BALANCE = 2_147_483_647;
     private readonly MIN_BALANCE = 0;
 
-    async getUserPoint(userId: number): Promise<UserPoint> {
+    async getPoint(userId: number): Promise<UserPoint> {
         if (userId == null || userId <= 0 || Number.isNaN(userId)) {
             throw new BadRequestException('올바르지 않은 ID 값 입니다.');
         }
         return this.userPointTable.selectById(userId);
     }
 
-    async chargeUserPoint(userId: number, amount: number): Promise<UserPoint> {
+    async chargePoint(userId: number, amount: number): Promise<UserPoint> {
         if (amount < 0) {
             throw new BadRequestException('충전 금액은 0보다 커야 합니다.');
         }

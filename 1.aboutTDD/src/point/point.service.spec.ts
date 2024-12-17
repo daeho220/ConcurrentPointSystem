@@ -51,7 +51,7 @@ describe('PointService', () => {
             const mockUserPoint: UserPoint = { id: userId, point: 100, updateMillis: now };
             jest.spyOn(userPointTable, 'selectById').mockResolvedValue(mockUserPoint);
 
-            const result = await service.getUserPoint(userId);
+            const result = await service.getPoint(userId);
 
             expect(result).toEqual({ id: userId, point: 100, updateMillis: now });
         });
@@ -65,9 +65,7 @@ describe('PointService', () => {
             { userId: NaN, description: 'NaN' },
             { userId: undefined, description: 'undefined' },
         ])('should throw an error when userId is $description', async ({ userId }) => {
-            await expect(service.getUserPoint(userId)).rejects.toThrow(
-                '올바르지 않은 ID 값 입니다.',
-            );
+            await expect(service.getPoint(userId)).rejects.toThrow('올바르지 않은 ID 값 입니다.');
         });
     });
 
@@ -110,7 +108,7 @@ describe('PointService', () => {
             };
             jest.spyOn(userPointTable, 'insertOrUpdate').mockResolvedValue(mockInsertOrUpdate);
 
-            const result = await service.chargeUserPoint(userId, amount);
+            const result = await service.chargePoint(userId, amount);
 
             expect(result).toEqual(mockInsertOrUpdate);
         });
@@ -121,9 +119,7 @@ describe('PointService', () => {
             const userId = 1;
             const amount = -1000;
 
-            await expect(service.chargeUserPoint(userId, amount)).rejects.toThrow(
-                BadRequestException,
-            );
+            await expect(service.chargePoint(userId, amount)).rejects.toThrow(BadRequestException);
         });
         // 2. 충전 금액이 최대 잔고(2,147,483,647)를 초과하면 예외를 발생시킵니다.
         it('should throw an error when the amount exceeds the maximum balance', async () => {
@@ -140,10 +136,8 @@ describe('PointService', () => {
             };
             jest.spyOn(userPointTable, 'selectById').mockResolvedValue(mockUserPoint);
 
-            await expect(service.chargeUserPoint(userId, amount)).rejects.toThrow(
-                BadRequestException,
-            );
-            await expect(service.chargeUserPoint(userId, amount)).rejects.toThrow(
+            await expect(service.chargePoint(userId, amount)).rejects.toThrow(BadRequestException);
+            await expect(service.chargePoint(userId, amount)).rejects.toThrow(
                 '최대 잔고를 초과했습니다.',
             );
         });
@@ -161,7 +155,7 @@ describe('PointService', () => {
                 new Error('올바르지 않은 ID 값 입니다.'),
             );
 
-            const result = service.chargeUserPoint(userId, amount);
+            const result = service.chargePoint(userId, amount);
             await expect(result).rejects.toThrow('올바르지 않은 ID 값 입니다.');
         });
     });
