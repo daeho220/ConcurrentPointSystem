@@ -39,7 +39,7 @@ export class PointService {
         return this.userPointTable.insertOrUpdate(userId, newBalance);
     }
 
-    private validateBalance(currentBalance: number, amount: number): void {
+    validateBalance(currentBalance: number, amount: number): void {
         const newBalance = currentBalance + amount;
 
         if (newBalance < this.MIN_BALANCE) {
@@ -51,7 +51,7 @@ export class PointService {
         }
     }
 
-    private async insertPointHistory(
+    async insertPointHistory(
         userId: number,
         amount: number,
         type: TransactionType,
