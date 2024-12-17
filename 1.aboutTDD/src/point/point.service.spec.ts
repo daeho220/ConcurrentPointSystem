@@ -164,5 +164,62 @@ describe('PointService', () => {
             const result = service.chargePoint(userId, amount);
             await expect(result).rejects.toThrow('올바르지 않은 ID 값 입니다.');
         });
+
+        // 동시성 제어 테스트
+        // 1. 동시에 3번의 충전 요청이 들어오면 순차적으로 처리되어야 합니다.
+        it('should handle concurrent charge requests correctly with mutex', async () => {
+            const userId = 1;
+            const chargeAmount = 1000;
+            let currentPoint = 1000; // 초기 포인트
+
+            // selectById 모킹 - 현재 포인트 반환
+            jest.spyOn(userPointTable, 'selectById').mockImplementation(async () => ({
+                id: userId,
+                point: currentPoint,
+                updateMillis: Date.now(),
+            }));
+
+            // insertOrUpdate 모킹 - 포인트 업데이트
+            jest.spyOn(userPointTable, 'insertOrUpdate').mockImplementation(
+                async (userId, newPoint) => {
+                    await new Promise((resolve) => setTimeout(resolve, 10)); // 의도적 지연
+                    currentPoint = newPoint;
+                    return {
+                        id: userId,
+                        point: newPoint,
+                        updateMillis: Date.now(),
+                    };
+                },
+            );
+
+            // 포인트 히스토리 모킹
+            jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
+                async (userId, amount, type, time) => ({
+                    id: Math.random(),
+                    userId,
+                    amount,
+                    type,
+                    timeMillis: time,
+                }),
+            );
+
+            // 동시에 3번의 충전 요청
+            const results = await Promise.all([
+                service.chargePoint(userId, chargeAmount),
+                service.chargePoint(userId, chargeAmount),
+                service.chargePoint(userId, chargeAmount),
+            ]);
+
+            // 검증
+            const finalResult = results[results.length - 1];
+            expect(finalResult.point).toBe(4000); // 1000 + (1000 * 3)
+
+            // 모든 충전이 순차적으로 처리되었는지 검증
+            const points = results.map((r) => r.point);
+            expect(points).toEqual([2000, 3000, 4000]);
+
+            // insertOrUpdate 호출 횟수 확인
+            expect(userPointTable.insertOrUpdate).toHaveBeenCalledTimes(3);
+        });
     });
 });

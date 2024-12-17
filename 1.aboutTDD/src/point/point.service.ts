@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserPointTable } from '../database/userpoint.table';
 import { PointHistoryTable } from '../database/pointhistory.table';
 import { PointHistory, TransactionType, UserPoint } from './point.model';
+import { Mutex } from 'async-mutex';
 
 @Injectable()
 export class PointService {
+    private userMutexMap: Map<number, Mutex> = new Map();
     constructor(
         private readonly userPointTable: UserPointTable,
         private readonly pointHistoryTable: PointHistoryTable,
@@ -21,22 +23,24 @@ export class PointService {
     }
 
     async chargePoint(userId: number, amount: number): Promise<UserPoint> {
-        if (amount < 0) {
-            throw new BadRequestException('충전 금액은 0보다 커야 합니다.');
-        }
+        const mutex = this.getUserMutex(userId);
 
-        const userInfo = await this.userPointTable.selectById(userId);
-        const currentBalance = userInfo.point;
+        return await mutex.runExclusive(async () => {
+            if (amount < 0) {
+                throw new BadRequestException('충전 금액은 0보다 커야 합니다.');
+            }
+            const userInfo = await this.userPointTable.selectById(userId);
+            const currentBalance = userInfo.point;
 
-        // 잔고 검증 호출
-        this.validateBalance(currentBalance, amount);
+            // 잔고 검증 호출
+            this.validateBalance(currentBalance, amount);
 
-        // 포인트 히스토리 저장
-        await this.insertPointHistory(userId, amount, TransactionType.CHARGE);
+            // 포인트 히스토리 저장
+            await this.insertPointHistory(userId, amount, TransactionType.CHARGE);
 
-        const newBalance = currentBalance + amount;
-
-        return this.userPointTable.insertOrUpdate(userId, newBalance);
+            const newBalance = currentBalance + amount;
+            return this.userPointTable.insertOrUpdate(userId, newBalance);
+        });
     }
 
     validateBalance(currentBalance: number, amount: number): void {
@@ -57,5 +61,12 @@ export class PointService {
         type: TransactionType,
     ): Promise<PointHistory> {
         return this.pointHistoryTable.insert(userId, amount, type, Date.now());
+    }
+
+    private getUserMutex(userId: number): Mutex {
+        if (!this.userMutexMap.has(userId)) {
+            this.userMutexMap.set(userId, new Mutex());
+        }
+        return this.userMutexMap.get(userId);
     }
 }
