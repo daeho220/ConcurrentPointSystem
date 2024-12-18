@@ -16,10 +16,13 @@ export class PointService {
     private readonly MIN_BALANCE = 0;
 
     async getPoint(userId: number): Promise<UserPoint> {
-        if (userId == null || userId <= 0 || Number.isNaN(userId)) {
-            throw new BadRequestException('올바르지 않은 ID 값 입니다.');
-        }
-        return this.userPointTable.selectById(userId);
+        const mutex = this.getUserMutex(userId);
+        return await mutex.runExclusive(() => {
+            if (userId == null || userId <= 0 || Number.isNaN(userId)) {
+                throw new BadRequestException('올바르지 않은 ID 값 입니다.');
+            }
+            return this.userPointTable.selectById(userId);
+        });
     }
 
     async chargePoint(userId: number, amount: number): Promise<UserPoint> {
