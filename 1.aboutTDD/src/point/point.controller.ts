@@ -6,6 +6,7 @@ import {
     Patch,
     ValidationPipe,
     BadRequestException,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { PointHistory, TransactionType, UserPoint } from './point.model';
 import { UserPointTable } from 'src/database/userpoint.table';
@@ -25,8 +26,7 @@ export class PointController {
      * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
      */
     @Get(':id')
-    async point(@Param('id') id): Promise<UserPoint> {
-        const userId = Number.parseInt(id);
+    async point(@Param('id', ParseIntPipe) userId: number): Promise<UserPoint> {
         return this.pointService.getPoint(userId);
     }
 
@@ -34,8 +34,7 @@ export class PointController {
      * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
      */
     @Get(':id/histories')
-    async history(@Param('id') id): Promise<PointHistory[]> {
-        const userId = Number.parseInt(id);
+    async history(@Param('id', ParseIntPipe) userId: number): Promise<PointHistory[]> {
         return this.pointService.getPointHistory(userId);
     }
 
@@ -43,19 +42,23 @@ export class PointController {
      * TODO - 특정 유저의 포인트를 충전하는 기능을 작성해주세요.
      */
     @Patch(':id/charge')
-    async charge(@Param('id') id, @Body(ValidationPipe) pointDto: PointDto): Promise<UserPoint> {
-        const userId = Number.parseInt(id);
+    async charge(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(ValidationPipe) pointDto: PointDto,
+    ): Promise<UserPoint> {
         const amount = pointDto.amount;
-        return this.pointService.chargePoint(userId, amount);
+        return this.pointService.chargePoint(id, amount);
     }
 
     /**
      * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
      */
     @Patch(':id/use')
-    async use(@Param('id') id, @Body(ValidationPipe) pointDto: PointDto): Promise<UserPoint> {
-        const userId = Number.parseInt(id);
+    async use(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(ValidationPipe) pointDto: PointDto,
+    ): Promise<UserPoint> {
         const amount = pointDto.amount;
-        return this.pointService.usePoint(userId, amount);
+        return this.pointService.usePoint(id, amount);
     }
 }
