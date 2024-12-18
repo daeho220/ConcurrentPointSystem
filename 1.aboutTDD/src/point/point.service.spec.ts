@@ -75,6 +75,18 @@ describe('PointService', () => {
 
     describe('포인트 충전 단위 테스트', () => {
         describe('성공 케이스', () => {
+            beforeAll(async () => {
+                // 포인트 히스토리 모킹
+                jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
+                    async (userId, amount, type, time) => ({
+                        id: Math.random(),
+                        userId,
+                        amount,
+                        type,
+                        timeMillis: time,
+                    }),
+                );
+            });
             it('유효한 사용자 ID와 충전 금액이 제공되면 올바른 사용자 포인트 정보를 반환합니다.', async () => {
                 const userId = 1;
                 const initialPoint = 0;
@@ -90,19 +102,6 @@ describe('PointService', () => {
                     updateMillis: now,
                 };
                 jest.spyOn(userPointTable, 'selectById').mockResolvedValue(mockUserPoint);
-
-                // 포인트 히스토리 모킹
-                jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
-                    async (userId, amount, type, time) => {
-                        return {
-                            id: 1,
-                            userId,
-                            amount,
-                            type,
-                            timeMillis: time,
-                        };
-                    },
-                );
 
                 // 사용자 포인트 업데이트 모킹
                 const mockInsertOrUpdate: UserPoint = {
@@ -139,17 +138,6 @@ describe('PointService', () => {
                             updateMillis: Date.now(),
                         };
                     },
-                );
-
-                // 포인트 히스토리 모킹
-                jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
-                    async (userId, amount, type, time) => ({
-                        id: Math.random(),
-                        userId,
-                        amount,
-                        type,
-                        timeMillis: time,
-                    }),
                 );
 
                 // 동시에 3번의 충전 요청
@@ -225,6 +213,18 @@ describe('PointService', () => {
 
     describe('포인트 사용 단위 테스트', () => {
         describe('성공 케이스', () => {
+            beforeAll(async () => {
+                // 포인트 히스토리 모킹
+                jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
+                    async (userId, amount, type, time) => ({
+                        id: Math.random(),
+                        userId,
+                        amount,
+                        type,
+                        timeMillis: time,
+                    }),
+                );
+            });
             it('유효한 사용자 ID와 사용 금액이 제공되면 올바른 사용자 포인트 정보를 반환합니다.', async () => {
                 const userId = 1;
                 const initialPoint = 10000;
@@ -240,19 +240,6 @@ describe('PointService', () => {
                     updateMillis: now,
                 };
                 jest.spyOn(userPointTable, 'selectById').mockResolvedValue(mockUserPoint);
-
-                // 포인트 히스토리 모킹
-                jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
-                    async (userId, amount, type, time) => {
-                        return {
-                            id: 1,
-                            userId,
-                            amount,
-                            type,
-                            timeMillis: time,
-                        };
-                    },
-                );
 
                 // 사용자 포인트 업데이트 모킹
                 const mockInsertOrUpdate: UserPoint = {
@@ -289,17 +276,6 @@ describe('PointService', () => {
                             updateMillis: Date.now(),
                         };
                     },
-                );
-
-                // 포인트 히스토리 모킹
-                jest.spyOn(pointHistoryTable, 'insert').mockImplementation(
-                    async (userId, amount, type, time) => ({
-                        id: Math.random(),
-                        userId,
-                        amount,
-                        type,
-                        timeMillis: time,
-                    }),
                 );
 
                 // 동시에 3번의 충전 요청
