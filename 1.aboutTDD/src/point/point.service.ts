@@ -34,21 +34,40 @@ export class PointService {
             }
             const userInfo = await this.userPointTable.selectById(userId);
             const currentBalance = userInfo.point;
+            const newBalance = currentBalance + amount;
 
             // 잔고 검증 호출
-            this.validateBalance(currentBalance, amount);
+            this.validateBalance(newBalance);
 
             // 포인트 히스토리 저장
             await this.insertPointHistory(userId, amount, TransactionType.CHARGE);
 
-            const newBalance = currentBalance + amount;
             return this.userPointTable.insertOrUpdate(userId, newBalance);
         });
     }
 
-    validateBalance(currentBalance: number, amount: number): void {
-        const newBalance = currentBalance + amount;
+    async usePoint(userId: number, amount: number): Promise<UserPoint> {
+        const mutex = this.getUserMutex(userId);
 
+        return await mutex.runExclusive(async () => {
+            if (amount < 0) {
+                throw new BadRequestException('사용 금액은 0보다 커야 합니다.');
+            }
+            const userInfo = await this.userPointTable.selectById(userId);
+            const currentBalance = userInfo.point;
+            const newBalance = currentBalance - amount;
+
+            // 잔고 검증 호출
+            this.validateBalance(newBalance);
+
+            // 포인트 히스토리 저장
+            await this.insertPointHistory(userId, amount, TransactionType.USE);
+
+            return this.userPointTable.insertOrUpdate(userId, newBalance);
+        });
+    }
+
+    validateBalance(newBalance: number): void {
         if (newBalance < this.MIN_BALANCE) {
             throw new BadRequestException('최저 잔고는 0입니다.');
         }
