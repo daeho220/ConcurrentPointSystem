@@ -39,10 +39,19 @@ export class PointService {
             // 잔고 검증 호출
             this.validateBalance(newBalance);
 
-            // 포인트 히스토리 저장
-            await this.insertPointHistory(userId, amount, TransactionType.CHARGE);
+            // 실제 포인트 변경
+            const updatedUserPoint = await this.userPointTable.insertOrUpdate(userId, newBalance);
 
-            return this.userPointTable.insertOrUpdate(userId, newBalance);
+            try {
+                // 포인트 히스토리 저장
+                await this.insertPointHistory(userId, amount, TransactionType.CHARGE);
+            } catch (error) {
+                // 롤백을 위한 코드 추가
+                await this.userPointTable.insertOrUpdate(userId, currentBalance);
+                throw new Error('히스토리 기록 실패');
+            }
+
+            return updatedUserPoint;
         });
     }
 
@@ -60,10 +69,19 @@ export class PointService {
             // 잔고 검증 호출
             this.validateBalance(newBalance);
 
-            // 포인트 히스토리 저장
-            await this.insertPointHistory(userId, amount, TransactionType.USE);
+            // 실제 포인트 변경
+            const updatedUserPoint = await this.userPointTable.insertOrUpdate(userId, newBalance);
 
-            return this.userPointTable.insertOrUpdate(userId, newBalance);
+            try {
+                // 포인트 히스토리 저장
+                await this.insertPointHistory(userId, amount, TransactionType.USE);
+            } catch (error) {
+                // 롤백을 위한 코드 추가
+                await this.userPointTable.insertOrUpdate(userId, currentBalance);
+                throw new Error('히스토리 기록 실패');
+            }
+
+            return updatedUserPoint;
         });
     }
 
