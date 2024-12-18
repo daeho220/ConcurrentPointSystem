@@ -25,6 +25,7 @@ describe('PointService', () => {
                     provide: PointHistoryTable,
                     useValue: {
                         insert: jest.fn(),
+                        selectAllByUserId: jest.fn(),
                     },
                 },
             ],
@@ -370,6 +371,41 @@ describe('PointService', () => {
 
             // insertOrUpdate 호출 횟수 확인
             expect(userPointTable.insertOrUpdate).toHaveBeenCalledTimes(3);
+        });
+    });
+
+    // 포인트 이력 조회 Unit test
+    describe('get user point history', () => {
+        // 성공 케이스
+        // 1. 유효한 사용자 ID가 제공되면 올바른 사용자 포인트 이력을 반환합니다.
+        it('should return the correct user point history when a valid user ID is provided', async () => {
+            const userId = 1;
+            const now = Date.now();
+
+            const mockPointHistory: PointHistory[] = [
+                { id: 1, userId, amount: 2000, type: TransactionType.CHARGE, timeMillis: now },
+                { id: 2, userId, amount: 1000, type: TransactionType.USE, timeMillis: now },
+            ];
+
+            jest.spyOn(pointHistoryTable, 'selectAllByUserId').mockResolvedValue(mockPointHistory);
+
+            const result = await service.getPointHistory(userId);
+
+            expect(result).toEqual(mockPointHistory);
+        });
+
+        //실패 케이스
+        // 1. 유효하지 않은 사용자 ID가 제공되면 예외를 발생시킵니다.
+        it.each([
+            { userId: null, description: 'null' },
+            { userId: 0, description: '0' },
+            { userId: -1, description: 'negative number' },
+            { userId: NaN, description: 'NaN' },
+            { userId: undefined, description: 'undefined' },
+        ])('should throw an error when userId is $description', async ({ userId }) => {
+            await expect(service.getPointHistory(userId)).rejects.toThrow(
+                '올바르지 않은 ID 값 입니다.',
+            );
         });
     });
 });

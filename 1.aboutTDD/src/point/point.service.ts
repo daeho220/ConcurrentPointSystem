@@ -67,6 +67,16 @@ export class PointService {
         });
     }
 
+    async getPointHistory(userId: number): Promise<PointHistory[]> {
+        const mutex = this.getUserMutex(userId);
+        return await mutex.runExclusive(() => {
+            if (userId == null || userId <= 0 || Number.isNaN(userId)) {
+                throw new BadRequestException('올바르지 않은 ID 값 입니다.');
+            }
+            return this.pointHistoryTable.selectAllByUserId(userId);
+        });
+    }
+
     validateBalance(newBalance: number): void {
         if (newBalance < this.MIN_BALANCE) {
             throw new BadRequestException('최저 잔고는 0입니다.');
