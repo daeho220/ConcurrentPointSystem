@@ -1,16 +1,7 @@
-import {
-    Body,
-    Controller,
-    Get,
-    Param,
-    Patch,
-    ValidationPipe,
-    BadRequestException,
-    ParseIntPipe,
-} from '@nestjs/common';
-import { PointHistory, TransactionType, UserPoint } from './point.model';
-import { UserPointTable } from 'src/database/userpoint.table';
-import { PointHistoryTable } from 'src/database/pointhistory.table';
+import { Body, Controller, Get, Param, Patch, ValidationPipe, ParseIntPipe } from '@nestjs/common';
+import { PointHistory, UserPoint } from './point.model';
+import { UserPointTable } from '../database/userpoint.table';
+import { PointHistoryTable } from '../database/pointhistory.table';
 import { PointBody as PointDto } from './point.dto';
 import { PointService } from './point.service';
 
