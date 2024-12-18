@@ -44,7 +44,12 @@ export class PointService {
 
             try {
                 // 포인트 히스토리 저장
-                await this.insertPointHistory(userId, amount, TransactionType.CHARGE);
+                await this.pointHistoryTable.insert(
+                    userId,
+                    amount,
+                    TransactionType.CHARGE,
+                    Date.now(),
+                );
             } catch (error) {
                 // 롤백을 위한 코드 추가
                 await this.userPointTable.insertOrUpdate(userId, currentBalance);
@@ -74,7 +79,12 @@ export class PointService {
 
             try {
                 // 포인트 히스토리 저장
-                await this.insertPointHistory(userId, amount, TransactionType.USE);
+                await this.pointHistoryTable.insert(
+                    userId,
+                    amount,
+                    TransactionType.USE,
+                    Date.now(),
+                );
             } catch (error) {
                 // 롤백을 위한 코드 추가
                 await this.userPointTable.insertOrUpdate(userId, currentBalance);
@@ -103,14 +113,6 @@ export class PointService {
         if (newBalance > this.MAX_BALANCE) {
             throw new BadRequestException('최대 잔고를 초과했습니다.');
         }
-    }
-
-    async insertPointHistory(
-        userId: number,
-        amount: number,
-        type: TransactionType,
-    ): Promise<PointHistory> {
-        return this.pointHistoryTable.insert(userId, amount, type, Date.now());
     }
 
     private getUserMutex(userId: number): Mutex {
