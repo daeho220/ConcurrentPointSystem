@@ -132,10 +132,10 @@ describe('Point Integration Test', () => {
             expect(user1Point.point).toBe(500);
             expect(user2Point.point).toBe(500);
             // 2. 처리 시간 검증
-            // 순차 처리시: (충전 + 히스토리 저장) * 2 + (사용 + 히스토리 저장) * 2 = 최대 2400ms
-            // 동시 처리시: 최대 600ms (한 번의 작업 사이클)
+            // 순차 처리시: (잔액 조회 + 충전 + 히스토리 저장) * 2 + (잔액 조회 + 사용 + 히스토리 저장) * 2 = 최대 3200ms
+            // 동시 처리시: 최대 800ms (한 번의 작업 사이클)
             const processingTime = endTime - startTime;
-            expect(processingTime).toBeLessThan(1200); // 순차 처리 시간의 절반 이하
+            expect(processingTime).toBeLessThan(1600); // 순차 처리 시간의 절반 이하
             // 3. 각 사용자의 트랜잭션이 독립적으로 처리되었는지 검증
             const [user1History, user2History] = await Promise.all([
                 pointService.getPointHistory(user1),
