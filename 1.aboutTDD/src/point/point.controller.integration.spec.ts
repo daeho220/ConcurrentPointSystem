@@ -144,6 +144,26 @@ describe('PointController Integration', () => {
                 expect(historyResponse.body[0].amount).toEqual(chargeAmount);
                 expect(historyResponse.body[0].type).toEqual(TransactionType.CHARGE);
             });
+            it('동시에 여러 조회 요청이 들어와도 안정적으로 처리되어야 한다.', async () => {
+                const userId = 7;
+                const currentPoint = 3000;
+
+                jest.spyOn(userPointTable, 'selectById').mockImplementation(async () => ({
+                    id: userId,
+                    point: currentPoint,
+                    updateMillis: Date.now(),
+                }));
+
+                const requests = Array(3)
+                    .fill(null)
+                    .map(() => request(app.getHttpServer()).get(`/point/${userId}`).expect(200));
+
+                const results = await Promise.all(requests);
+
+                results.forEach((response) => {
+                    expect(response.body.point).toBe(currentPoint);
+                });
+            });
         });
 
         describe('실패 테스트', () => {
